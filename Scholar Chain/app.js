@@ -1,6 +1,21 @@
 import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6.13.5/+esm";
 
+const CONTRACT_ADDRESS = "0xb7f65E68DefC1caB71b9cAA97CF7D8335751D205";
+
 const ABI = [
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "admin",
+        "type": "address"
+      }
+    ],
+    "name": "addAdmin",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
   {
     "inputs": [],
     "stateMutability": "nonpayable",
@@ -12,23 +27,29 @@ const ABI = [
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "appId",
+        "name": "applicationId",
         "type": "uint256"
       },
       {
         "indexed": false,
+        "internalType": "enum ScholarChain.ApplicationStatus",
+        "name": "status",
+        "type": "uint8"
+      },
+      {
+        "indexed": true,
         "internalType": "address",
-        "name": "student",
+        "name": "admin",
         "type": "address"
       },
       {
         "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
+        "internalType": "string",
+        "name": "note",
+        "type": "string"
       }
     ],
-    "name": "ApplicationApproved",
+    "name": "ApplicationReviewed",
     "type": "event"
   },
   {
@@ -37,20 +58,20 @@ const ABI = [
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "appId",
+        "name": "applicationId",
         "type": "uint256"
       },
       {
-        "indexed": false,
-        "internalType": "address",
-        "name": "student",
-        "type": "address"
-      },
-      {
-        "indexed": false,
+        "indexed": true,
         "internalType": "uint256",
         "name": "scholarshipId",
         "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "student",
+        "type": "address"
       }
     ],
     "name": "ApplicationSubmitted",
@@ -60,8 +81,13 @@ const ABI = [
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_scholarshipId",
+        "name": "scholarshipId",
         "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "note",
+        "type": "string"
       }
     ],
     "name": "applyForScholarship",
@@ -70,69 +96,20 @@ const ABI = [
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_applicationId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "string",
-        "name": "_notes",
-        "type": "string"
-      }
-    ],
-    "name": "approveApplication",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "_name",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "_description",
-        "type": "string"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_maxRecipients",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint16",
-        "name": "_minCgpaX100",
-        "type": "uint16"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_maxIncomeX100",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint8",
-        "name": "_requiredSemester",
-        "type": "uint8"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_deadline",
-        "type": "uint256"
-      }
-    ],
-    "name": "createScholarship",
-    "outputs": [],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
     "anonymous": false,
     "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "applicationId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "scholarshipId",
+        "type": "uint256"
+      },
       {
         "indexed": true,
         "internalType": "address",
@@ -144,79 +121,111 @@ const ABI = [
         "internalType": "uint256",
         "name": "amount",
         "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "scholarshipId",
-        "type": "uint256"
       }
     ],
-    "name": "FundsReleased",
+    "name": "AwardPaid",
     "type": "event"
   },
   {
     "inputs": [
       {
         "internalType": "string",
-        "name": "_fullName",
+        "name": "title",
         "type": "string"
       },
       {
         "internalType": "string",
-        "name": "_nationalId",
+        "name": "description",
         "type": "string"
       },
       {
-        "internalType": "string",
-        "name": "_university",
-        "type": "string"
+        "internalType": "uint256",
+        "name": "awardAmount",
+        "type": "uint256"
       },
       {
-        "internalType": "string",
-        "name": "_program",
-        "type": "string"
-      },
-      {
-        "internalType": "uint8",
-        "name": "_semesterYear",
-        "type": "uint8"
+        "internalType": "uint256",
+        "name": "maxWinners",
+        "type": "uint256"
       },
       {
         "internalType": "uint16",
-        "name": "_cgpaX100",
+        "name": "minGpaX100",
         "type": "uint16"
       },
       {
         "internalType": "uint256",
-        "name": "_annualIncomeX100",
+        "name": "maxAnnualIncome",
         "type": "uint256"
       },
       {
-        "internalType": "string",
-        "name": "_ipfsHash",
-        "type": "string"
+        "internalType": "uint8",
+        "name": "minSemester",
+        "type": "uint8"
+      },
+      {
+        "internalType": "uint256",
+        "name": "deadline",
+        "type": "uint256"
       }
     ],
-    "name": "registerStudent",
+    "name": "createScholarship",
     "outputs": [],
-    "stateMutability": "nonpayable",
+    "stateMutability": "payable",
     "type": "function"
   },
   {
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_applicationId",
+        "name": "scholarshipId",
+        "type": "uint256"
+      }
+    ],
+    "name": "fundScholarship",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "fullName",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "university",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "program",
+        "type": "string"
+      },
+      {
+        "internalType": "uint8",
+        "name": "semester",
+        "type": "uint8"
+      },
+      {
+        "internalType": "uint16",
+        "name": "gpaX100",
+        "type": "uint16"
+      },
+      {
+        "internalType": "uint256",
+        "name": "annualIncome",
         "type": "uint256"
       },
       {
         "internalType": "string",
-        "name": "reason",
+        "name": "documentCID",
         "type": "string"
       }
     ],
-    "name": "rejectApplication",
+    "name": "registerOrUpdateStudent",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -225,16 +234,57 @@ const ABI = [
     "inputs": [
       {
         "internalType": "address",
-        "name": "_student",
+        "name": "admin",
         "type": "address"
+      }
+    ],
+    "name": "removeAdmin",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "applicationId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "approved",
+        "type": "bool"
       },
       {
         "internalType": "string",
-        "name": "reason",
+        "name": "decisionNote",
         "type": "string"
       }
     ],
-    "name": "rejectStudent",
+    "name": "reviewApplication",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "studentAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "approved",
+        "type": "bool"
+      },
+      {
+        "internalType": "string",
+        "name": "note",
+        "type": "string"
+      }
+    ],
+    "name": "reviewStudent",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -245,25 +295,25 @@ const ABI = [
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "id",
+        "name": "scholarshipId",
         "type": "uint256"
       },
       {
         "indexed": false,
         "internalType": "string",
-        "name": "name",
+        "name": "title",
         "type": "string"
       },
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "address",
-        "name": "provider",
+        "name": "sponsor",
         "type": "address"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "amount",
+        "name": "totalFund",
         "type": "uint256"
       }
     ],
@@ -275,6 +325,49 @@ const ABI = [
     "inputs": [
       {
         "indexed": true,
+        "internalType": "uint256",
+        "name": "scholarshipId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "funder",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "ScholarshipFunded",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "scholarshipId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "active",
+        "type": "bool"
+      }
+    ],
+    "name": "setScholarshipActive",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
         "internalType": "address",
         "name": "student",
         "type": "address"
@@ -282,7 +375,7 @@ const ABI = [
       {
         "indexed": false,
         "internalType": "string",
-        "name": "name",
+        "name": "fullName",
         "type": "string"
       }
     ],
@@ -300,6 +393,12 @@ const ABI = [
       },
       {
         "indexed": false,
+        "internalType": "enum ScholarChain.StudentStatus",
+        "name": "status",
+        "type": "uint8"
+      },
+      {
+        "indexed": true,
         "internalType": "address",
         "name": "admin",
         "type": "address"
@@ -307,43 +406,35 @@ const ABI = [
       {
         "indexed": false,
         "internalType": "string",
-        "name": "reason",
+        "name": "note",
         "type": "string"
       }
     ],
-    "name": "StudentRejected",
+    "name": "StudentReviewed",
     "type": "event"
   },
   {
-    "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
         "internalType": "address",
-        "name": "student",
+        "name": "",
         "type": "address"
       },
       {
-        "indexed": false,
-        "internalType": "address",
-        "name": "admin",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
-    "name": "StudentVerified",
-    "type": "event"
-  },
-  {
-    "inputs": [
+    "name": "applicationByStudentAndScholarship",
+    "outputs": [
       {
-        "internalType": "address",
-        "name": "_student",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
-    "name": "verifyStudent",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -375,14 +466,19 @@ const ABI = [
         "type": "uint256"
       },
       {
+        "internalType": "uint256",
+        "name": "scholarshipId",
+        "type": "uint256"
+      },
+      {
         "internalType": "address",
         "name": "student",
         "type": "address"
       },
       {
-        "internalType": "uint256",
-        "name": "scholarshipId",
-        "type": "uint256"
+        "internalType": "string",
+        "name": "note",
+        "type": "string"
       },
       {
         "internalType": "enum ScholarChain.ApplicationStatus",
@@ -391,23 +487,23 @@ const ABI = [
       },
       {
         "internalType": "uint256",
-        "name": "submittedAt",
+        "name": "appliedAt",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "approvedAt",
+        "name": "paidAt",
         "type": "uint256"
-      },
-      {
-        "internalType": "string",
-        "name": "reviewNotes",
-        "type": "string"
       },
       {
         "internalType": "address",
         "name": "reviewedBy",
         "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "decisionNote",
+        "type": "string"
       }
     ],
     "stateMutability": "view",
@@ -417,21 +513,171 @@ const ABI = [
     "inputs": [
       {
         "internalType": "address",
-        "name": "",
+        "name": "studentAddress",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "scholarshipId",
         "type": "uint256"
       }
     ],
-    "name": "existingApplication",
+    "name": "checkEligibility",
     "outputs": [
       {
-        "internalType": "uint256",
+        "internalType": "bool",
         "name": "",
-        "type": "uint256"
+        "type": "bool"
+      },
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getAllApplications",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "id",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "scholarshipId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "student",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "note",
+            "type": "string"
+          },
+          {
+            "internalType": "enum ScholarChain.ApplicationStatus",
+            "name": "status",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint256",
+            "name": "appliedAt",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "paidAt",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "reviewedBy",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "decisionNote",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct ScholarChain.Application[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getAllScholarships",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "id",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "sponsor",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalFund",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "remainingFund",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "awardAmount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxWinners",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "winners",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint16",
+            "name": "minGpaX100",
+            "type": "uint16"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxAnnualIncome",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint8",
+            "name": "minSemester",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "active",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct ScholarChain.Scholarship[]",
+        "name": "",
+        "type": "tuple[]"
       }
     ],
     "stateMutability": "view",
@@ -442,9 +688,121 @@ const ABI = [
     "name": "getAllStudents",
     "outputs": [
       {
-        "internalType": "address[]",
+        "components": [
+          {
+            "internalType": "address",
+            "name": "wallet",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "fullName",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "university",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "program",
+            "type": "string"
+          },
+          {
+            "internalType": "uint8",
+            "name": "semester",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint16",
+            "name": "gpaX100",
+            "type": "uint16"
+          },
+          {
+            "internalType": "uint256",
+            "name": "annualIncome",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "documentCID",
+            "type": "string"
+          },
+          {
+            "internalType": "enum ScholarChain.StudentStatus",
+            "name": "status",
+            "type": "uint8"
+          },
+          {
+            "internalType": "bool",
+            "name": "exists",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct ScholarChain.Student[]",
         "name": "",
-        "type": "address[]"
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getMyApplications",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "id",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "scholarshipId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "student",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "note",
+            "type": "string"
+          },
+          {
+            "internalType": "enum ScholarChain.ApplicationStatus",
+            "name": "status",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint256",
+            "name": "appliedAt",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "paidAt",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "reviewedBy",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "decisionNote",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct ScholarChain.Application[]",
+        "name": "",
+        "type": "tuple[]"
       }
     ],
     "stateMutability": "view",
@@ -484,43 +842,6 @@ const ABI = [
   },
   {
     "inputs": [],
-    "name": "platformFeeBps",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "scholarshipApplications",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "scholarshipCount",
     "outputs": [
       {
@@ -549,7 +870,7 @@ const ABI = [
       },
       {
         "internalType": "string",
-        "name": "name",
+        "name": "title",
         "type": "string"
       },
       {
@@ -559,7 +880,7 @@ const ABI = [
       },
       {
         "internalType": "address",
-        "name": "provider",
+        "name": "sponsor",
         "type": "address"
       },
       {
@@ -569,43 +890,38 @@ const ABI = [
       },
       {
         "internalType": "uint256",
-        "name": "disbursedAmount",
+        "name": "remainingFund",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "maxRecipients",
+        "name": "awardAmount",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "currentRecipients",
+        "name": "maxWinners",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "winners",
         "type": "uint256"
       },
       {
         "internalType": "uint16",
-        "name": "minCgpaX100",
+        "name": "minGpaX100",
         "type": "uint16"
       },
       {
         "internalType": "uint256",
-        "name": "maxAnnualIncomeX100",
+        "name": "maxAnnualIncome",
         "type": "uint256"
       },
       {
         "internalType": "uint8",
-        "name": "requiredSemester",
+        "name": "minSemester",
         "type": "uint8"
-      },
-      {
-        "internalType": "enum ScholarChain.ScholarshipStatus",
-        "name": "status",
-        "type": "uint8"
-      },
-      {
-        "internalType": "uint256",
-        "name": "createdAt",
-        "type": "uint256"
       },
       {
         "internalType": "uint256",
@@ -613,33 +929,9 @@ const ABI = [
         "type": "uint256"
       },
       {
-        "internalType": "uint256",
-        "name": "amountPerRecipient",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "studentApplications",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
+        "internalType": "bool",
+        "name": "active",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -667,11 +959,6 @@ const ABI = [
       },
       {
         "internalType": "string",
-        "name": "nationalId",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
         "name": "university",
         "type": "string"
       },
@@ -682,18 +969,23 @@ const ABI = [
       },
       {
         "internalType": "uint8",
-        "name": "semesterYear",
+        "name": "semester",
         "type": "uint8"
       },
       {
         "internalType": "uint16",
-        "name": "cgpaX100",
+        "name": "gpaX100",
         "type": "uint16"
       },
       {
         "internalType": "uint256",
-        "name": "annualIncomeX100",
+        "name": "annualIncome",
         "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "documentCID",
+        "type": "string"
       },
       {
         "internalType": "enum ScholarChain.StudentStatus",
@@ -701,18 +993,8 @@ const ABI = [
         "type": "uint8"
       },
       {
-        "internalType": "uint256",
-        "name": "registrationTime",
-        "type": "uint256"
-      },
-      {
-        "internalType": "string",
-        "name": "ipfsDocumentHash",
-        "type": "string"
-      },
-      {
         "internalType": "bool",
-        "name": "isRegistered",
+        "name": "exists",
         "type": "bool"
       }
     ],
@@ -721,363 +1003,402 @@ const ABI = [
   }
 ];
 
+const StudentStatus = ["None", "Pending", "Verified", "Rejected"];
+const ApplicationStatus = ["None", "Applied", "Approved", "Rejected", "Paid"];
+
 let provider;
 let signer;
 let contract;
+let currentAccount = "";
+let allScholarships = [];
+let allStudents = [];
+let allApplications = [];
+
+const $ = (selector) => document.querySelector(selector);
 
 const els = {
-  connectWallet: document.querySelector("#connectWallet"),
-  walletAddress: document.querySelector("#walletAddress"),
-  contractAddress: document.querySelector("#contractAddress"),
-  saveContract: document.querySelector("#saveContract"),
-  networkName: document.querySelector("#networkName"),
-  statusBox: document.querySelector("#statusBox"),
-  output: document.querySelector("#output")
+  connectWallet: $("#connectWallet"),
+  walletAddress: $("#walletAddress"),
+  networkName: $("#networkName"),
+  contractLabel: $("#contractLabel"),
+  roleLabel: $("#roleLabel"),
+  notice: $("#notice"),
+  statScholarships: $("#statScholarships"),
+  statStudents: $("#statStudents"),
+  statApplications: $("#statApplications"),
+  scholarshipList: $("#scholarshipList"),
+  studentProfile: $("#studentProfile"),
+  myApplications: $("#myApplications"),
+  studentReviewList: $("#studentReviewList"),
+  applicationReviewList: $("#applicationReviewList"),
+  paymentRows: $("#paymentRows")
 };
 
-const CONTRACT_ADDRESS = "0x756856C4b76f12E8349C3d003BF8a612d0dA04a8";
-els.contractAddress.value = CONTRACT_ADDRESS;
-
-document.querySelectorAll(".tab").forEach((tab) => {
-  tab.addEventListener("click", () => {
-    document.querySelectorAll(".tab, .tab-panel").forEach((el) => el.classList.remove("active"));
-    tab.classList.add("active");
-    document.querySelector(`#${tab.dataset.tab}`).classList.add("active");
-  });
-});
-
+els.contractLabel.textContent = isConfigured() ? shortAddress(CONTRACT_ADDRESS) : "Paste address in app.js";
 els.connectWallet.addEventListener("click", connectWallet);
-els.saveContract.addEventListener("click", () => {
-  connectContract();
-  showStatus("Contract loaded.");
-  loadRoleDashboard();
-});
-document.querySelector("#clearOutput").addEventListener("click", () => {
-  els.output.textContent = "Ready.";
-});
+$("#refreshScholarships").addEventListener("click", refreshApp);
+$("#refreshAdmin").addEventListener("click", refreshApp);
+$("#refreshActivity").addEventListener("click", loadPayments);
+$("#studentForm").addEventListener("submit", saveStudentProfile);
+$("#scholarshipForm").addEventListener("submit", createScholarship);
 
-bindForms();
+function isConfigured() {
+  return ethers.isAddress(CONTRACT_ADDRESS);
+}
 
 async function connectWallet() {
-  if (!window.ethereum) {
-    showStatus("MetaMask or another injected wallet is required.", true);
+  try {
+    if (!window.ethereum) {
+      showNotice("Please install MetaMask or another browser wallet.", true);
+      return;
+    }
+
+    if (!isConfigured()) {
+      showNotice("Deploy ScholarChainSimple.sol, then paste the deployed address in app.js.", true);
+      return;
+    }
+
+    provider = new ethers.BrowserProvider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    signer = await provider.getSigner();
+    currentAccount = await signer.getAddress();
+    contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+
+    const network = await provider.getNetwork();
+    els.walletAddress.textContent = shortAddress(currentAccount);
+    els.networkName.textContent = `Connected to ${network.name || "custom network"} (${network.chainId})`;
+
+    showNotice("Wallet connected. Dashboard loaded.");
+    await refreshApp();
+  } catch (error) {
+    handleError("Wallet connection failed", error);
+  }
+}
+
+async function refreshApp() {
+  if (!contract) return;
+
+  const [owner, admin, student, scholarships, students, applications, myApplications] = await Promise.all([
+    contract.owner(),
+    contract.isAdmin(currentAccount),
+    contract.students(currentAccount),
+    contract.getAllScholarships(),
+    contract.getAllStudents(),
+    contract.getAllApplications(),
+    contract.getMyApplications()
+  ]);
+
+  allScholarships = scholarships;
+  allStudents = students;
+  allApplications = applications;
+
+  updateRole(owner, admin, student);
+  renderStats(scholarships, students, applications);
+  renderStudentProfile(student, myApplications);
+  renderScholarships(scholarships, student);
+  renderAdmin(students, applications, scholarships, admin);
+  await loadPayments();
+}
+
+function updateRole(owner, admin, student) {
+  const roles = [];
+  if (owner.toLowerCase() === currentAccount.toLowerCase()) roles.push("Owner");
+  if (admin) roles.push("Admin");
+  if (student.exists) roles.push("Student");
+  els.roleLabel.textContent = roles.length ? roles.join(" + ") : "Connected user";
+}
+
+function renderStats(scholarships, students, applications) {
+  els.statScholarships.textContent = scholarships.length;
+  els.statStudents.textContent = students.length;
+  els.statApplications.textContent = applications.length;
+}
+
+function renderStudentProfile(student, applications) {
+  if (!student.exists) {
+    els.studentProfile.className = "empty-state";
+    els.studentProfile.textContent = "No student profile yet. Fill the form to register.";
+  } else {
+    els.studentProfile.className = "profile-card";
+    els.studentProfile.innerHTML = `
+      <span class="${statusClass(Number(student.status))}">${StudentStatus[Number(student.status)]}</span>
+      <h3>${escapeHtml(student.fullName)}</h3>
+      <div class="mini-meta">
+        <div><span>University</span><strong>${escapeHtml(student.university)}</strong></div>
+        <div><span>Program</span><strong>${escapeHtml(student.program)}</strong></div>
+        <div><span>Semester</span><strong>${student.semester}</strong></div>
+        <div><span>GPA</span><strong>${formatGpa(student.gpaX100)}</strong></div>
+      </div>
+    `;
+  }
+
+  if (!applications.length) {
+    els.myApplications.innerHTML = "";
     return;
   }
 
-  provider = new ethers.BrowserProvider(window.ethereum);
-  await provider.send("eth_requestAccounts", []);
-  signer = await provider.getSigner();
-  const network = await provider.getNetwork();
-  els.walletAddress.textContent = await signer.getAddress();
-  els.networkName.textContent = `Network: ${network.name || "custom"} (${network.chainId})`;
-  connectContract();
-  showStatus("Wallet connected.");
-  loadRoleDashboard();
+  els.myApplications.innerHTML = `
+    <h3>My applications</h3>
+    ${applications.map((application) => `
+      <div class="mini-item">
+        <span>Application #${application.id} for scholarship #${application.scholarshipId}</span>
+        <strong>${ApplicationStatus[Number(application.status)]}</strong>
+      </div>
+    `).join("")}
+  `;
 }
 
-function connectContract() {
-  if (!signer || !ethers.isAddress(CONTRACT_ADDRESS)) return;
-  contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+function renderScholarships(scholarships, student) {
+  if (!scholarships.length) {
+    els.scholarshipList.innerHTML = `<div class="empty-state">No scholarships are published yet.</div>`;
+    return;
+  }
+
+  els.scholarshipList.innerHTML = scholarships.map((scholarship) => {
+    const closed = !scholarship.active || Number(scholarship.deadline) * 1000 < Date.now();
+    const seatsLeft = Number(scholarship.maxWinners - scholarship.winners);
+    const canApply = student.exists && Number(student.status) === 2 && !closed && seatsLeft > 0;
+
+    return `
+      <article class="scholarship-card">
+        <header>
+          <span class="${closed ? "badge warning" : "badge"}">${closed ? "Closed" : "Open"}</span>
+          <h3>${escapeHtml(scholarship.title)}</h3>
+          <p>${escapeHtml(scholarship.description)}</p>
+        </header>
+        <div class="card-meta">
+          <div><span>Award</span><strong>${formatNative(scholarship.awardAmount)}</strong></div>
+          <div><span>Seats left</span><strong>${Math.max(seatsLeft, 0)}</strong></div>
+          <div><span>Minimum GPA</span><strong>${formatGpa(scholarship.minGpaX100)}</strong></div>
+          <div><span>Deadline</span><strong>${formatDate(scholarship.deadline)}</strong></div>
+        </div>
+        <button class="primary" data-apply="${scholarship.id}" ${canApply ? "" : "disabled"}>${canApply ? "Apply Now" : "Not available"}</button>
+      </article>
+    `;
+  }).join("");
+
+  document.querySelectorAll("[data-apply]").forEach((button) => {
+    button.addEventListener("click", () => applyForScholarship(button.dataset.apply));
+  });
+}
+
+function renderAdmin(students, applications, scholarships, admin) {
+  if (!admin) {
+    els.studentReviewList.innerHTML = `<div class="empty-state">Only admins can verify students.</div>`;
+    els.applicationReviewList.innerHTML = `<div class="empty-state">Only admins can approve or reject applications.</div>`;
+    return;
+  }
+
+  const pendingStudents = students.filter((student) => Number(student.status) === 1);
+  els.studentReviewList.innerHTML = pendingStudents.length
+    ? pendingStudents.map((student) => `
+      <div class="review-item">
+        <div>
+          <h3>${escapeHtml(student.fullName)}</h3>
+          <p>${escapeHtml(student.university)} - ${escapeHtml(student.program)}</p>
+        </div>
+        <div class="mini-meta">
+          <div><span>GPA</span><strong>${formatGpa(student.gpaX100)}</strong></div>
+          <div><span>Income</span><strong>${formatNumber(student.annualIncome)}</strong></div>
+        </div>
+        <div class="review-actions">
+          <button class="primary" data-student-approve="${student.wallet}">Verify</button>
+          <button class="danger" data-student-reject="${student.wallet}">Reject</button>
+        </div>
+      </div>
+    `).join("")
+    : `<div class="empty-state">No students waiting for verification.</div>`;
+
+  const applied = applications.filter((application) => Number(application.status) === 1);
+  els.applicationReviewList.innerHTML = applied.length
+    ? applied.map((application) => {
+      const scholarship = scholarships.find((item) => item.id === application.scholarshipId);
+      const student = students.find((item) => item.wallet.toLowerCase() === application.student.toLowerCase());
+      return `
+        <div class="review-item">
+          <div>
+            <h3>${student ? escapeHtml(student.fullName) : shortAddress(application.student)}</h3>
+            <p>${scholarship ? escapeHtml(scholarship.title) : `Scholarship #${application.scholarshipId}`}</p>
+          </div>
+          <p>${escapeHtml(application.note || "No student note provided.")}</p>
+          <div class="review-actions">
+            <button class="primary" data-app-approve="${application.id}">Approve and Pay</button>
+            <button class="danger" data-app-reject="${application.id}">Reject</button>
+          </div>
+        </div>
+      `;
+    }).join("")
+    : `<div class="empty-state">No applications waiting for review.</div>`;
+
+  document.querySelectorAll("[data-student-approve]").forEach((button) => {
+    button.addEventListener("click", () => reviewStudent(button.dataset.studentApprove, true));
+  });
+  document.querySelectorAll("[data-student-reject]").forEach((button) => {
+    button.addEventListener("click", () => reviewStudent(button.dataset.studentReject, false));
+  });
+  document.querySelectorAll("[data-app-approve]").forEach((button) => {
+    button.addEventListener("click", () => reviewApplication(button.dataset.appApprove, true));
+  });
+  document.querySelectorAll("[data-app-reject]").forEach((button) => {
+    button.addEventListener("click", () => reviewApplication(button.dataset.appReject, false));
+  });
+}
+
+async function saveStudentProfile(event) {
+  event.preventDefault();
+  await sendTransaction("Saving student profile", async () => {
+    const data = new FormData(event.currentTarget);
+    return contract.registerOrUpdateStudent(
+      data.get("fullName").trim(),
+      data.get("university").trim(),
+      data.get("program").trim(),
+      Number(data.get("semester")),
+      gpaToX100(data.get("gpa")),
+      BigInt(data.get("income")),
+      data.get("documentCID").trim()
+    );
+  });
+}
+
+async function createScholarship(event) {
+  event.preventDefault();
+  await sendTransaction("Creating scholarship", async () => {
+    const data = new FormData(event.currentTarget);
+    const awardAmount = ethers.parseEther(data.get("awardAmount"));
+    const maxWinners = BigInt(data.get("maxWinners"));
+    const totalFunding = awardAmount * maxWinners;
+
+    return contract.createScholarship(
+      data.get("title").trim(),
+      data.get("description").trim(),
+      awardAmount,
+      maxWinners,
+      gpaToX100(data.get("minGpa")),
+      BigInt(data.get("maxIncome")),
+      Number(data.get("minSemester")),
+      BigInt(toUnix(data.get("deadline"))),
+      { value: totalFunding }
+    );
+  });
+}
+
+async function applyForScholarship(scholarshipId) {
+  const note = window.prompt("Add a short note for the admin, or leave it blank.");
+  if (note === null) return;
+
+  await sendTransaction("Submitting application", async () => {
+    return contract.applyForScholarship(BigInt(scholarshipId), note.trim());
+  });
+}
+
+async function reviewStudent(studentAddress, approved) {
+  await sendTransaction(approved ? "Verifying student" : "Rejecting student", async () => {
+    return contract.reviewStudent(studentAddress, approved, approved ? "Verified" : "Rejected by admin");
+  });
+}
+
+async function reviewApplication(applicationId, approved) {
+  await sendTransaction(approved ? "Approving and paying award" : "Rejecting application", async () => {
+    return contract.reviewApplication(BigInt(applicationId), approved, approved ? "Approved for award" : "Application rejected");
+  });
+}
+
+async function sendTransaction(label, makeTransaction) {
+  try {
+    requireContract();
+    showNotice(`${label}. Please confirm in your wallet.`);
+    const tx = await makeTransaction();
+    showNotice("Transaction sent. Waiting for confirmation...");
+    await tx.wait();
+    showNotice(`${label} completed.`);
+    await refreshApp();
+  } catch (error) {
+    handleError(label, error);
+  }
+}
+
+async function loadPayments() {
+  if (!contract) return;
+
+  const events = await contract.queryFilter(contract.filters.AwardPaid(), 0, "latest");
+  if (!events.length) {
+    els.paymentRows.innerHTML = `<tr><td colspan="4">No award payments yet.</td></tr>`;
+    return;
+  }
+
+  els.paymentRows.innerHTML = events.slice().reverse().map((event) => `
+    <tr>
+      <td>${shortAddress(event.args.student)}</td>
+      <td>#${event.args.scholarshipId}</td>
+      <td>${formatNative(event.args.amount)}</td>
+      <td>${shortAddress(event.transactionHash)}</td>
+    </tr>
+  `).join("");
 }
 
 function requireContract() {
-  if (!contract) throw new Error("Connect wallet and set the contract address first.");
-  return contract;
+  if (!contract) throw new Error("Connect your wallet first.");
 }
 
-function getFormValues(form) {
-  return Object.fromEntries(new FormData(form).entries());
-}
-
-function toInt(value, label) {
-  if (value === "" || value === undefined || value === null) throw new Error(`${label} is required.`);
-  return BigInt(value);
-}
-
-function toNumber(value, label) {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed)) throw new Error(`${label} must be a number.`);
-  return parsed;
-}
-
-function deadlineToUnix(value) {
-  const ms = new Date(value).getTime();
-  if (!Number.isFinite(ms)) throw new Error("Deadline must be a valid date.");
-  return Math.floor(ms / 1000);
-}
-
-async function sendTransaction(label, fn) {
-  try {
-    showStatus(`${label}: waiting for wallet confirmation...`);
-    const tx = await fn(requireContract());
-    showStatus(`${label}: submitted ${tx.hash}. Waiting for confirmation...`);
-    const receipt = await tx.wait();
-    writeOutput({ label, transactionHash: receipt.hash, blockNumber: receipt.blockNumber, status: receipt.status === 1 ? "success" : "failed" });
-    showStatus(`${label}: confirmed.`);
-  } catch (error) {
-    handleError(label, error);
-  }
-}
-
-async function readContract(label, fn) {
-  try {
-    const result = await fn(requireContract());
-    writeOutput(formatResult(result));
-    showStatus(`${label}: loaded.`);
-  } catch (error) {
-    handleError(label, error);
-  }
+function showNotice(message, isError = false) {
+  els.notice.hidden = false;
+  els.notice.textContent = message;
+  els.notice.classList.toggle("error", isError);
 }
 
 function handleError(label, error) {
-  const reason = error?.shortMessage || error?.reason || error?.message || "Unknown error";
-  showStatus(`${label}: ${reason}`, true);
-  writeOutput({ label, error: reason, raw: error?.info || null });
+  const message = error?.shortMessage || error?.reason || error?.message || "Something went wrong.";
+  showNotice(`${label}: ${message}`, true);
 }
 
-function showStatus(message, isError = false) {
-  els.statusBox.hidden = false;
-  els.statusBox.textContent = message;
-  els.statusBox.style.color = isError ? "var(--red)" : "var(--green-dark)";
+function shortAddress(value) {
+  if (!value || value.length < 12) return value || "-";
+  return `${value.slice(0, 6)}...${value.slice(-4)}`;
 }
 
-function writeOutput(value) {
-  els.output.textContent = typeof value === "string" ? value : JSON.stringify(value, bigIntReplacer, 2);
+function gpaToX100(value) {
+  const gpa = Number(value);
+  if (!Number.isFinite(gpa) || gpa < 0 || gpa > 4) throw new Error("GPA must be between 0.00 and 4.00.");
+  return Math.round(gpa * 100);
 }
 
-function bigIntReplacer(_key, value) {
-  return typeof value === "bigint" ? value.toString() : value;
+function formatGpa(value) {
+  return (Number(value) / 100).toFixed(2);
 }
 
-function formatResult(value) {
-  if (Array.isArray(value)) return value.map(formatResult);
-  if (value && typeof value === "object") {
-    const obj = {};
-    Object.entries(value).forEach(([key, item]) => {
-      if (!Number.isNaN(Number(key))) return;
-      obj[key] = formatResult(item);
-    });
-    return obj;
-  }
-  return value;
+function formatNative(value) {
+  return `${Number(ethers.formatEther(value)).toLocaleString(undefined, { maximumFractionDigits: 4 })} native coin`;
 }
 
-const STUDENT_STATUS = ["Unregistered", "Pending", "Verified", "Rejected", "Blacklisted"];
-const SCHOLARSHIP_STATUS = ["Active", "Paused", "Completed", "Cancelled"];
-const APPLICATION_STATUS = ["Submitted", "Under review", "Approved", "Rejected", "Disbursing", "Completed"];
-
-async function loadRoleDashboard() {
-  if (!contract || !signer) return;
-
-  try {
-    const address = await signer.getAddress();
-    const [owner, admin, student] = await Promise.all([
-      contract.owner(),
-      contract.isAdmin(address),
-      contract.students(address)
-    ]);
-
-    const roles = [];
-    if (owner.toLowerCase() === address.toLowerCase()) roles.push("Owner");
-    if (admin) roles.push("Admin");
-    if (student.isRegistered) roles.push("Student");
-
-    document.querySelector("#roleTitle").textContent = roles.length ? roles.join(" + ") : "Connected user";
-    document.querySelector("#roleOverview").innerHTML = `
-      <div><dt>Access</dt><dd>${roles.length ? roles.join(", ") : "Wallet only"}</dd></div>
-      <div><dt>Student</dt><dd>${student.isRegistered ? STUDENT_STATUS[Number(student.status)] : "Not registered"}</dd></div>
-      <div><dt>Owner</dt><dd>${shortAddress(owner)}</dd></div>
-    `;
-  } catch (error) {
-    handleError("Role dashboard", error);
-  }
+function formatNumber(value) {
+  return Number(value).toLocaleString();
 }
 
-function shortAddress(address) {
-  if (!address || address.length < 12) return address || "-";
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
-}
-
-function formatStudent(student) {
-  return {
-    wallet: student.wallet,
-    fullName: student.fullName,
-    university: student.university,
-    program: student.program,
-    semesterYear: student.semesterYear,
-    cgpa: `${Number(student.cgpaX100) / 100}`,
-    annualIncomeX100: student.annualIncomeX100,
-    status: STUDENT_STATUS[Number(student.status)] || String(student.status),
-    ipfsDocumentHash: student.ipfsDocumentHash,
-    isRegistered: student.isRegistered
-  };
-}
-
-function formatScholarship(scholarship) {
-  return {
-    id: scholarship.id,
-    name: scholarship.name,
-    description: scholarship.description,
-    provider: scholarship.provider,
-    totalFund: ethers.formatEther(scholarship.totalFund),
-    disbursedAmount: ethers.formatEther(scholarship.disbursedAmount),
-    maxRecipients: scholarship.maxRecipients,
-    currentRecipients: scholarship.currentRecipients,
-    minCgpa: `${Number(scholarship.minCgpaX100) / 100}`,
-    maxAnnualIncomeX100: scholarship.maxAnnualIncomeX100,
-    requiredSemester: scholarship.requiredSemester,
-    status: SCHOLARSHIP_STATUS[Number(scholarship.status)] || String(scholarship.status),
-    deadline: new Date(Number(scholarship.deadline) * 1000).toLocaleString(),
-    amountPerRecipient: ethers.formatEther(scholarship.amountPerRecipient)
-  };
-}
-
-function formatApplication(application) {
-  return {
-    id: application.id,
-    student: application.student,
-    scholarshipId: application.scholarshipId,
-    status: APPLICATION_STATUS[Number(application.status)] || String(application.status),
-    submittedAt: new Date(Number(application.submittedAt) * 1000).toLocaleString(),
-    approvedAt: Number(application.approvedAt) ? new Date(Number(application.approvedAt) * 1000).toLocaleString() : "Not approved",
-    reviewNotes: application.reviewNotes,
-    reviewedBy: application.reviewedBy
-  };
-}
-
-async function checkEligibilityBasic(studentAddress, scholarshipId) {
-  const [student, scholarship, existingApp] = await Promise.all([
-    contract.students(studentAddress),
-    contract.scholarships(scholarshipId),
-    contract.existingApplication(studentAddress, scholarshipId)
-  ]);
-
-  if (!student.isRegistered) return { eligible: false, reason: "Student is not registered." };
-  if (Number(student.status) !== 2) return { eligible: false, reason: `Student status is ${STUDENT_STATUS[Number(student.status)]}.` };
-  if (Number(scholarship.status) !== 0) return { eligible: false, reason: `Scholarship status is ${SCHOLARSHIP_STATUS[Number(scholarship.status)]}.` };
-  if (Date.now() / 1000 > Number(scholarship.deadline)) return { eligible: false, reason: "Application deadline has passed." };
-  if (existingApp > 0n) return { eligible: false, reason: "Student already applied for this scholarship." };
-  if (student.cgpaX100 < scholarship.minCgpaX100) return { eligible: false, reason: "CGPA is below the scholarship minimum." };
-  if (scholarship.maxAnnualIncomeX100 > 0n && student.annualIncomeX100 > scholarship.maxAnnualIncomeX100) return { eligible: false, reason: "Income is above the scholarship limit." };
-  if (scholarship.requiredSemester > 0 && student.semesterYear < scholarship.requiredSemester) return { eligible: false, reason: "Semester requirement is not met." };
-
-  return {
-    eligible: true,
-    reason: "Student meets the visible scholarship requirements.",
-    student: formatStudent(student),
-    scholarship: formatScholarship(scholarship)
-  };
-}
-
-async function loadPaymentHistory(studentAddress) {
-  const events = await contract.queryFilter(contract.filters.FundsReleased(), 0, "latest");
-  const normalized = events
-    .map((event) => ({
-      blockNumber: event.blockNumber,
-      student: event.args.student,
-      amount: ethers.formatEther(event.args.amount),
-      scholarshipId: event.args.scholarshipId,
-      transactionHash: event.transactionHash
-    }))
-    .filter((event) => !studentAddress || event.student.toLowerCase() === studentAddress.toLowerCase());
-
-  return normalized.length ? normalized : "No disbursements found.";
-}
-
-function bindForms() {
-  document.querySelector("#registerStudentForm").addEventListener("submit", (event) => {
-    event.preventDefault();
-    const v = getFormValues(event.currentTarget);
-    sendTransaction("Register student", (c) =>
-      c.registerStudent(v.fullName, v.nationalId, v.university, v.program, toNumber(v.semesterYear, "Semester"), toNumber(v.cgpaX100, "CGPA"), toInt(v.annualIncomeX100, "Annual income"), v.ipfsDocumentHash)
-    );
+function formatDate(value) {
+  return new Date(Number(value) * 1000).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric"
   });
+}
 
-  document.querySelector("#profileLookupForm").addEventListener("submit", (event) => {
-    event.preventDefault();
-    const v = getFormValues(event.currentTarget);
-    readContract("Student profile", async (c) => formatStudent(await c.students(v.student)));
-  });
+function toUnix(value) {
+  const ms = new Date(value).getTime();
+  if (!Number.isFinite(ms)) throw new Error("Choose a valid deadline.");
+  return Math.floor(ms / 1000);
+}
 
-  document.querySelector("#eligibilityForm").addEventListener("submit", (event) => {
-    event.preventDefault();
-    const v = getFormValues(event.currentTarget);
-    readContract("Eligibility", () => checkEligibilityBasic(v.student, toInt(v.scholarshipId, "Scholarship ID")));
-  });
+function statusClass(status) {
+  if (status === 2) return "badge";
+  if (status === 3) return "badge error";
+  return "badge warning";
+}
 
-  document.querySelector("#applyForm").addEventListener("submit", (event) => {
-    event.preventDefault();
-    const v = getFormValues(event.currentTarget);
-    sendTransaction("Apply for scholarship", (c) => c.applyForScholarship(toInt(v.scholarshipId, "Scholarship ID")));
-  });
-
-  document.querySelector("#studentDecisionForm").addEventListener("click", (event) => {
-    if (event.target.tagName !== "BUTTON") return;
-    event.preventDefault();
-    const v = getFormValues(event.currentTarget);
-    const action = event.target.dataset.action;
-    const calls = {
-      verify: (c) => c.verifyStudent(v.student),
-      reject: (c) => c.rejectStudent(v.student, v.reason || "Rejected")
-    };
-    sendTransaction(`${action} student`, calls[action]);
-  });
-
-  document.querySelector("#createScholarshipForm").addEventListener("submit", (event) => {
-    event.preventDefault();
-    const v = getFormValues(event.currentTarget);
-    sendTransaction("Create scholarship", (c) =>
-      c.createScholarship(
-        v.name,
-        v.description,
-        toInt(v.maxRecipients, "Max recipients"),
-        toNumber(v.minCgpaX100, "Minimum CGPA"),
-        toInt(v.maxAnnualIncomeX100, "Max annual income"),
-        toNumber(v.requiredSemester, "Required semester"),
-        BigInt(deadlineToUnix(v.deadline)),
-        { value: ethers.parseEther(v.ethAmount) }
-      )
-    );
-  });
-
-  document.querySelector("#scholarshipLookupForm").addEventListener("submit", (event) => {
-    event.preventDefault();
-    const v = getFormValues(event.currentTarget);
-    readContract("Scholarship details", async (c) => formatScholarship(await c.scholarships(toInt(v.scholarshipId, "Scholarship ID"))));
-  });
-
-  document.querySelector("#applicationDecisionForm").addEventListener("click", (event) => {
-    if (event.target.tagName !== "BUTTON") return;
-    event.preventDefault();
-    const v = getFormValues(event.currentTarget);
-    const action = event.target.dataset.action;
-    sendTransaction(`${action} application`, (c) =>
-      action === "approve"
-        ? c.approveApplication(toInt(v.applicationId, "Application ID"), v.notes || "Approved")
-        : c.rejectApplication(toInt(v.applicationId, "Application ID"), v.notes || "Rejected")
-    );
-  });
-
-  document.querySelector("#applicationLookupForm").addEventListener("submit", (event) => {
-    event.preventDefault();
-    const v = getFormValues(event.currentTarget);
-    readContract("Application details", async (c) => formatApplication(await c.applications(toInt(v.applicationId, "Application ID"))));
-  });
-
-  document.querySelector("#paymentHistoryForm").addEventListener("submit", (event) => {
-    event.preventDefault();
-    const v = getFormValues(event.currentTarget);
-    readContract("Payment history", () => loadPaymentHistory(v.student.trim()));
-  });
-
-  document.querySelector("#loadRole").addEventListener("click", () => {
-    loadRoleDashboard();
-    showStatus("Role dashboard refreshed.");
-  });
-
-  document.querySelector("#loadStudents").addEventListener("click", () => readContract("Students", (c) => c.getAllStudents()));
-  document.querySelector("#loadCounts").addEventListener("click", () => readContract("Counts", async (c) => {
-    const [scholarships, applications] = await Promise.all([c.scholarshipCount(), c.applicationCount()]);
-    return { scholarships, applications };
-  }));
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
