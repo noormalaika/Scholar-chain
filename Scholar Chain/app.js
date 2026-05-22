@@ -1041,9 +1041,23 @@ $("#refreshAdmin").addEventListener("click", refreshApp);
 $("#refreshActivity").addEventListener("click", loadPayments);
 $("#studentForm").addEventListener("submit", saveStudentProfile);
 $("#scholarshipForm").addEventListener("submit", createScholarship);
+document.querySelectorAll(".nav-route").forEach((button) => {
+  button.addEventListener("click", () => showPage(button.dataset.page));
+});
+
+showPage("home");
 
 function isConfigured() {
   return ethers.isAddress(CONTRACT_ADDRESS);
+}
+
+function showPage(pageName) {
+  document.querySelectorAll(".page").forEach((page) => page.classList.remove("active"));
+  document.querySelector(`#page-${pageName}`)?.classList.add("active");
+
+  document.querySelectorAll(".nav-tabs .nav-route").forEach((button) => {
+    button.classList.toggle("active", button.dataset.page === pageName);
+  });
 }
 
 async function connectWallet() {
