@@ -750,6 +750,7 @@ els.connectWallet.addEventListener("click", connectWallet);
 els.saveContract.addEventListener("click", () => {
   connectContract();
   showStatus("Contract loaded.");
+  loadRoleDashboard();
 });
 document.querySelector("#clearOutput").addEventListener("click", () => {
   els.output.textContent = "Ready.";
@@ -771,6 +772,7 @@ async function connectWallet() {
   els.networkName.textContent = `Network: ${network.name || "custom"} (${network.chainId})`;
   connectContract();
   showStatus("Wallet connected.");
+  loadRoleDashboard();
 }
 
 function connectContract() {
@@ -860,6 +862,128 @@ function formatResult(value) {
   return value;
 }
 
+const STUDENT_STATUS = ["Unregistered", "Pending", "Verified", "Rejected", "Blacklisted"];
+const SCHOLARSHIP_STATUS = ["Active", "Paused", "Completed", "Cancelled"];
+const APPLICATION_STATUS = ["Submitted", "Under review", "Approved", "Rejected", "Disbursing", "Completed"];
+
+async function loadRoleDashboard() {
+  if (!contract || !signer) return;
+
+  try {
+    const address = await signer.getAddress();
+    const [owner, admin, student] = await Promise.all([
+      contract.owner(),
+      contract.isAdmin(address),
+      contract.students(address)
+    ]);
+
+    const roles = [];
+    if (owner.toLowerCase() === address.toLowerCase()) roles.push("Owner");
+    if (admin) roles.push("Admin");
+    if (student.isRegistered) roles.push("Student");
+
+    document.querySelector("#roleTitle").textContent = roles.length ? roles.join(" + ") : "Connected user";
+    document.querySelector("#roleOverview").innerHTML = `
+      <div><dt>Access</dt><dd>${roles.length ? roles.join(", ") : "Wallet only"}</dd></div>
+      <div><dt>Student</dt><dd>${student.isRegistered ? STUDENT_STATUS[Number(student.status)] : "Not registered"}</dd></div>
+      <div><dt>Owner</dt><dd>${shortAddress(owner)}</dd></div>
+    `;
+  } catch (error) {
+    handleError("Role dashboard", error);
+  }
+}
+
+function shortAddress(address) {
+  if (!address || address.length < 12) return address || "-";
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+function formatStudent(student) {
+  return {
+    wallet: student.wallet,
+    fullName: student.fullName,
+    university: student.university,
+    program: student.program,
+    semesterYear: student.semesterYear,
+    cgpa: `${Number(student.cgpaX100) / 100}`,
+    annualIncomeX100: student.annualIncomeX100,
+    status: STUDENT_STATUS[Number(student.status)] || String(student.status),
+    ipfsDocumentHash: student.ipfsDocumentHash,
+    isRegistered: student.isRegistered
+  };
+}
+
+function formatScholarship(scholarship) {
+  return {
+    id: scholarship.id,
+    name: scholarship.name,
+    description: scholarship.description,
+    provider: scholarship.provider,
+    totalFund: ethers.formatEther(scholarship.totalFund),
+    disbursedAmount: ethers.formatEther(scholarship.disbursedAmount),
+    maxRecipients: scholarship.maxRecipients,
+    currentRecipients: scholarship.currentRecipients,
+    minCgpa: `${Number(scholarship.minCgpaX100) / 100}`,
+    maxAnnualIncomeX100: scholarship.maxAnnualIncomeX100,
+    requiredSemester: scholarship.requiredSemester,
+    status: SCHOLARSHIP_STATUS[Number(scholarship.status)] || String(scholarship.status),
+    deadline: new Date(Number(scholarship.deadline) * 1000).toLocaleString(),
+    amountPerRecipient: ethers.formatEther(scholarship.amountPerRecipient)
+  };
+}
+
+function formatApplication(application) {
+  return {
+    id: application.id,
+    student: application.student,
+    scholarshipId: application.scholarshipId,
+    status: APPLICATION_STATUS[Number(application.status)] || String(application.status),
+    submittedAt: new Date(Number(application.submittedAt) * 1000).toLocaleString(),
+    approvedAt: Number(application.approvedAt) ? new Date(Number(application.approvedAt) * 1000).toLocaleString() : "Not approved",
+    reviewNotes: application.reviewNotes,
+    reviewedBy: application.reviewedBy
+  };
+}
+
+async function checkEligibilityBasic(studentAddress, scholarshipId) {
+  const [student, scholarship, existingApp] = await Promise.all([
+    contract.students(studentAddress),
+    contract.scholarships(scholarshipId),
+    contract.existingApplication(studentAddress, scholarshipId)
+  ]);
+
+  if (!student.isRegistered) return { eligible: false, reason: "Student is not registered." };
+  if (Number(student.status) !== 2) return { eligible: false, reason: `Student status is ${STUDENT_STATUS[Number(student.status)]}.` };
+  if (Number(scholarship.status) !== 0) return { eligible: false, reason: `Scholarship status is ${SCHOLARSHIP_STATUS[Number(scholarship.status)]}.` };
+  if (Date.now() / 1000 > Number(scholarship.deadline)) return { eligible: false, reason: "Application deadline has passed." };
+  if (existingApp > 0n) return { eligible: false, reason: "Student already applied for this scholarship." };
+  if (student.cgpaX100 < scholarship.minCgpaX100) return { eligible: false, reason: "CGPA is below the scholarship minimum." };
+  if (scholarship.maxAnnualIncomeX100 > 0n && student.annualIncomeX100 > scholarship.maxAnnualIncomeX100) return { eligible: false, reason: "Income is above the scholarship limit." };
+  if (scholarship.requiredSemester > 0 && student.semesterYear < scholarship.requiredSemester) return { eligible: false, reason: "Semester requirement is not met." };
+
+  return {
+    eligible: true,
+    reason: "Student meets the visible scholarship requirements.",
+    student: formatStudent(student),
+    scholarship: formatScholarship(scholarship)
+  };
+}
+
+async function loadPaymentHistory(studentAddress) {
+  const events = await contract.queryFilter(contract.filters.FundsReleased(), 0, "latest");
+  const normalized = events
+    .map((event) => ({
+      blockNumber: event.blockNumber,
+      student: event.args.student,
+      amount: ethers.formatEther(event.args.amount),
+      scholarshipId: event.args.scholarshipId,
+      transactionHash: event.transactionHash
+    }))
+    .filter((event) => !studentAddress || event.student.toLowerCase() === studentAddress.toLowerCase());
+
+  return normalized.length ? normalized : "No disbursements found.";
+}
+
 function bindForms() {
   document.querySelector("#registerStudentForm").addEventListener("submit", (event) => {
     event.preventDefault();
@@ -869,32 +993,22 @@ function bindForms() {
     );
   });
 
-  document.querySelector("#updateStudentForm").addEventListener("submit", (event) => {
+  document.querySelector("#profileLookupForm").addEventListener("submit", (event) => {
     event.preventDefault();
     const v = getFormValues(event.currentTarget);
-    sendTransaction("Update student profile", (c) =>
-      c.updateStudentProfile(v.university, v.program, toNumber(v.semesterYear, "Semester"), toNumber(v.cgpaX100, "CGPA"), toInt(v.annualIncomeX100, "Annual income"), v.ipfsDocumentHash)
-    );
+    readContract("Student profile", async (c) => formatStudent(await c.students(v.student)));
   });
 
   document.querySelector("#eligibilityForm").addEventListener("submit", (event) => {
     event.preventDefault();
     const v = getFormValues(event.currentTarget);
-    readContract("Eligibility", (c) => c.checkEligibility(v.student, toInt(v.scholarshipId, "Scholarship ID")));
+    readContract("Eligibility", () => checkEligibilityBasic(v.student, toInt(v.scholarshipId, "Scholarship ID")));
   });
 
   document.querySelector("#applyForm").addEventListener("submit", (event) => {
     event.preventDefault();
     const v = getFormValues(event.currentTarget);
     sendTransaction("Apply for scholarship", (c) => c.applyForScholarship(toInt(v.scholarshipId, "Scholarship ID")));
-  });
-
-  document.querySelector("#adminForm").addEventListener("click", (event) => {
-    if (event.target.tagName !== "BUTTON") return;
-    event.preventDefault();
-    const v = getFormValues(event.currentTarget);
-    const action = event.target.dataset.action;
-    sendTransaction(action === "add" ? "Add admin" : "Remove admin", (c) => action === "add" ? c.addAdmin(v.admin) : c.removeAdmin(v.admin));
   });
 
   document.querySelector("#studentDecisionForm").addEventListener("click", (event) => {
@@ -904,23 +1018,9 @@ function bindForms() {
     const action = event.target.dataset.action;
     const calls = {
       verify: (c) => c.verifyStudent(v.student),
-      reject: (c) => c.rejectStudent(v.student, v.reason || "Rejected"),
-      blacklist: (c) => c.blacklistStudent(v.student, v.reason || "Blacklisted")
+      reject: (c) => c.rejectStudent(v.student, v.reason || "Rejected")
     };
     sendTransaction(`${action} student`, calls[action]);
-  });
-
-  document.querySelector("#ownerForm").addEventListener("click", (event) => {
-    if (event.target.tagName !== "BUTTON") return;
-    event.preventDefault();
-    const v = getFormValues(event.currentTarget);
-    const action = event.target.dataset.action;
-    const calls = {
-      transfer: (c) => c.transferOwnership(v.newOwner),
-      fee: (c) => c.updatePlatformFee(toInt(v.feeBps, "Fee bps")),
-      withdraw: (c) => c.withdrawFees()
-    };
-    sendTransaction(`Owner ${action}`, calls[action]);
   });
 
   document.querySelector("#createScholarshipForm").addEventListener("submit", (event) => {
@@ -935,37 +1035,15 @@ function bindForms() {
         toInt(v.maxAnnualIncomeX100, "Max annual income"),
         toNumber(v.requiredSemester, "Required semester"),
         BigInt(deadlineToUnix(v.deadline)),
-        toInt(v.tranches, "Tranches"),
         { value: ethers.parseEther(v.ethAmount) }
       )
     );
   });
 
-  document.querySelector("#fundScholarshipForm").addEventListener("submit", (event) => {
-    event.preventDefault();
-    const v = getFormValues(event.currentTarget);
-    sendTransaction("Fund scholarship", (c) => c.fundScholarship(toInt(v.scholarshipId, "Scholarship ID"), { value: ethers.parseEther(v.ethAmount) }));
-  });
-
-  document.querySelector("#statusScholarshipForm").addEventListener("submit", (event) => {
-    event.preventDefault();
-    const v = getFormValues(event.currentTarget);
-    sendTransaction("Change scholarship status", (c) => c.setScholarshipStatus(toInt(v.scholarshipId, "Scholarship ID"), toNumber(v.status, "Status")));
-  });
-
   document.querySelector("#scholarshipLookupForm").addEventListener("submit", (event) => {
     event.preventDefault();
     const v = getFormValues(event.currentTarget);
-    readContract("Scholarship details", async (c) => ({
-      details: await c.scholarships(toInt(v.scholarshipId, "Scholarship ID")),
-      availableBalanceWei: await c.getScholarshipAvailableBalance(toInt(v.scholarshipId, "Scholarship ID"))
-    }));
-  });
-
-  document.querySelector("#reviewForm").addEventListener("submit", (event) => {
-    event.preventDefault();
-    const v = getFormValues(event.currentTarget);
-    sendTransaction("Mark under review", (c) => c.markUnderReview(toInt(v.applicationId, "Application ID")));
+    readContract("Scholarship details", async (c) => formatScholarship(await c.scholarships(toInt(v.scholarshipId, "Scholarship ID"))));
   });
 
   document.querySelector("#applicationDecisionForm").addEventListener("click", (event) => {
@@ -980,41 +1058,26 @@ function bindForms() {
     );
   });
 
-  document.querySelector("#releaseForm").addEventListener("submit", (event) => {
+  document.querySelector("#applicationLookupForm").addEventListener("submit", (event) => {
     event.preventDefault();
     const v = getFormValues(event.currentTarget);
-    sendTransaction("Release tranche", (c) => c.releaseNextTranche(toInt(v.applicationId, "Application ID")));
-  });
-
-  document.querySelector("#studentApplicationsForm").addEventListener("submit", (event) => {
-    event.preventDefault();
-    const v = getFormValues(event.currentTarget);
-    readContract("Student applications", (c) => c.getStudentApplications(v.student));
-  });
-
-  document.querySelector("#scholarshipApplicationsForm").addEventListener("submit", (event) => {
-    event.preventDefault();
-    const v = getFormValues(event.currentTarget);
-    readContract("Scholarship applications", (c) => c.getScholarshipApplications(toInt(v.scholarshipId, "Scholarship ID")));
+    readContract("Application details", async (c) => formatApplication(await c.applications(toInt(v.applicationId, "Application ID"))));
   });
 
   document.querySelector("#paymentHistoryForm").addEventListener("submit", (event) => {
     event.preventDefault();
     const v = getFormValues(event.currentTarget);
-    readContract("Payment history", (c) => c.getStudentPaymentHistory(v.student));
+    readContract("Payment history", () => loadPaymentHistory(v.student.trim()));
   });
 
-  document.querySelector("#transactionRangeForm").addEventListener("submit", (event) => {
-    event.preventDefault();
-    const v = getFormValues(event.currentTarget);
-    readContract("Transaction range", (c) => c.getTransactions(toInt(v.from, "From"), toInt(v.to, "To")));
+  document.querySelector("#loadRole").addEventListener("click", () => {
+    loadRoleDashboard();
+    showStatus("Role dashboard refreshed.");
   });
 
-  document.querySelector("#loadAdmins").addEventListener("click", () => readContract("Admins", (c) => c.getAllAdmins()));
   document.querySelector("#loadStudents").addEventListener("click", () => readContract("Students", (c) => c.getAllStudents()));
-  document.querySelector("#loadTxCount").addEventListener("click", () => readContract("Transaction count", (c) => c.getTransactionCount()));
-  document.querySelector("#loadBalance").addEventListener("click", () => readContract("Contract balance", async (c) => {
-    const wei = await c.getContractBalance();
-    return { wei, formatted: ethers.formatEther(wei) };
+  document.querySelector("#loadCounts").addEventListener("click", () => readContract("Counts", async (c) => {
+    const [scholarships, applications] = await Promise.all([c.scholarshipCount(), c.applicationCount()]);
+    return { scholarships, applications };
   }));
 }
