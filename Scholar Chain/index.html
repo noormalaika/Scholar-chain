@@ -8,228 +8,237 @@
     <script type="module" src="./app.js"></script>
   </head>
   <body>
-    <header class="topbar">
-      <div>
-        <p class="eyebrow">Scholar Chain</p>
-        <h1>Scholarship Distribution Dashboard</h1>
-      </div>
-      <div class="wallet-box">
-        <button id="connectWallet" class="primary">Connect Wallet</button>
-        <span id="walletAddress">Not connected</span>
+    <header class="hero">
+      <nav class="nav">
+        <div class="brand">
+          <span class="brand-mark">SC</span>
+          <div>
+            <p>Scholar Chain</p>
+            <strong>Distribution Console</strong>
+          </div>
+        </div>
+        <div class="wallet-box">
+          <button id="connectWallet" class="primary">Connect Wallet</button>
+          <span id="walletAddress">Not connected</span>
+        </div>
+      </nav>
+
+      <div class="hero-grid">
+        <section class="hero-copy">
+          <p class="eyebrow">Transparent scholarship funding</p>
+          <h1>Manage students, scholarships, approvals, and disbursements in one clean workflow.</h1>
+          <div class="contract-strip">
+            <label for="contractAddress">Contract</label>
+            <input id="contractAddress" readonly />
+            <button id="saveContract">Load</button>
+          </div>
+          <p id="networkName">Network: unknown</p>
+        </section>
+
+        <aside class="role-card">
+          <p class="eyebrow">Role dashboard</p>
+          <h2 id="roleTitle">Connect your wallet</h2>
+          <dl id="roleOverview">
+            <div>
+              <dt>Access</dt>
+              <dd>Waiting for wallet</dd>
+            </div>
+            <div>
+              <dt>Contract</dt>
+              <dd>Ready</dd>
+            </div>
+          </dl>
+        </aside>
       </div>
     </header>
 
-    <main>
-	<section class="setup-panel">
-	  <div>
-	    <label for="contractAddress">Contract Address</label>
-	    <input id="contractAddress" readonly />
-	  </div>
-	  <button id="saveContract">Load Contract</button>
-	  <span id="networkName">Network: unknown</span>
-	</section>
-      <nav class="tabs" aria-label="Dashboard sections">
-        <button class="tab active" data-tab="student">Student</button>
-        <button class="tab" data-tab="admin">Admin</button>
-        <button class="tab" data-tab="scholarship">Scholarships</button>
-        <button class="tab" data-tab="applications">Applications</button>
-        <button class="tab" data-tab="audit">Audit</button>
-      </nav>
-
+    <main class="shell">
       <section id="statusBox" class="status" hidden></section>
 
-      <section class="tab-panel active" id="student">
-        <div class="grid two">
-          <form id="registerStudentForm" class="card">
-            <h2>Register Student</h2>
-            <input name="fullName" placeholder="Full name" required />
-            <input name="nationalId" placeholder="Hashed national ID" required />
-            <input name="university" placeholder="University" required />
-            <input name="program" placeholder="Program" required />
-            <input name="semesterYear" type="number" min="1" max="16" placeholder="Semester / year" required />
-            <input name="cgpaX100" type="number" min="0" max="400" placeholder="CGPA x 100, e.g. 375" required />
-            <input name="annualIncomeX100" type="number" min="0" placeholder="Annual income x 100" required />
-            <input name="ipfsDocumentHash" placeholder="IPFS document CID" required />
-            <button class="primary">Register</button>
-          </form>
+      <div class="workspace">
+        <aside class="sidebar">
+          <button class="tab active" data-tab="student">Student</button>
+          <button class="tab" data-tab="scholarships">Scholarships</button>
+          <button class="tab" data-tab="admin">Admin</button>
+          <button class="tab" data-tab="history">History</button>
+        </aside>
 
-          <form id="updateStudentForm" class="card">
-            <h2>Update Profile</h2>
-            <input name="university" placeholder="University" required />
-            <input name="program" placeholder="Program" required />
-            <input name="semesterYear" type="number" min="1" max="16" placeholder="Semester / year" required />
-            <input name="cgpaX100" type="number" min="0" max="400" placeholder="CGPA x 100" required />
-            <input name="annualIncomeX100" type="number" min="0" placeholder="Annual income x 100" required />
-            <input name="ipfsDocumentHash" placeholder="IPFS document CID" required />
-            <button>Update</button>
-          </form>
-        </div>
-
-        <div class="grid two">
-          <form id="eligibilityForm" class="card">
-            <h2>Check Eligibility</h2>
-            <input name="student" placeholder="Student wallet address" required />
-            <input name="scholarshipId" type="number" min="1" placeholder="Scholarship ID" required />
-            <button>Check</button>
-          </form>
-
-          <form id="applyForm" class="card">
-            <h2>Apply for Scholarship</h2>
-            <input name="scholarshipId" type="number" min="1" placeholder="Scholarship ID" required />
-            <button class="primary">Apply</button>
-          </form>
-        </div>
-      </section>
-
-      <section class="tab-panel" id="admin">
-        <div class="grid three">
-          <form id="adminForm" class="card">
-            <h2>Admin Access</h2>
-            <input name="admin" placeholder="Admin wallet address" required />
-            <div class="button-row">
-              <button data-action="add">Add</button>
-              <button data-action="remove" class="danger">Remove</button>
+        <section class="content">
+          <section class="tab-panel active" id="student">
+            <div class="section-heading">
+              <p class="eyebrow">Student workspace</p>
+              <h2>Registration, profile, eligibility, and application</h2>
             </div>
-          </form>
 
-          <form id="studentDecisionForm" class="card">
-            <h2>Student Verification</h2>
-            <input name="student" placeholder="Student wallet address" required />
-            <input name="reason" placeholder="Reason, if rejecting or blacklisting" />
-            <div class="button-row">
-              <button data-action="verify" class="primary">Verify</button>
-              <button data-action="reject">Reject</button>
-              <button data-action="blacklist" class="danger">Blacklist</button>
+            <div class="feature-layout">
+              <form id="registerStudentForm" class="panel wide">
+                <div class="panel-head">
+                  <h3>Student Registration</h3>
+                  <span>Required once</span>
+                </div>
+                <div class="form-grid">
+                  <input name="fullName" placeholder="Full name" required />
+                  <input name="nationalId" placeholder="Hashed national ID" required />
+                  <input name="university" placeholder="University" required />
+                  <input name="program" placeholder="Program" required />
+                  <input name="semesterYear" type="number" min="1" max="16" placeholder="Semester / year" required />
+                  <input name="cgpaX100" type="number" min="0" max="400" placeholder="CGPA x 100, e.g. 375" required />
+                  <input name="annualIncomeX100" type="number" min="0" placeholder="Annual income x 100" required />
+                  <input name="ipfsDocumentHash" placeholder="IPFS document CID" required />
+                </div>
+                <button class="primary">Register Student</button>
+              </form>
+
+              <div class="side-stack">
+                <form id="profileLookupForm" class="panel">
+                  <div class="panel-head">
+                    <h3>Profile</h3>
+                    <span>Read status</span>
+                  </div>
+                  <input name="student" placeholder="Student wallet address" required />
+                  <button>View Profile</button>
+                </form>
+
+                <form id="eligibilityForm" class="panel">
+                  <div class="panel-head">
+                    <h3>Eligibility</h3>
+                    <span>Local check</span>
+                  </div>
+                  <input name="student" placeholder="Student wallet address" required />
+                  <input name="scholarshipId" type="number" min="1" placeholder="Scholarship ID" required />
+                  <button>Check Eligibility</button>
+                </form>
+
+                <form id="applyForm" class="panel accent">
+                  <div class="panel-head">
+                    <h3>Apply</h3>
+                    <span>Verified students</span>
+                  </div>
+                  <input name="scholarshipId" type="number" min="1" placeholder="Scholarship ID" required />
+                  <button class="primary">Submit Application</button>
+                </form>
+              </div>
             </div>
-          </form>
+          </section>
 
-          <form id="ownerForm" class="card">
-            <h2>Owner Tools</h2>
-            <input name="newOwner" placeholder="New owner address" />
-            <input name="feeBps" type="number" min="0" max="500" placeholder="Platform fee bps" />
-            <div class="button-row">
-              <button data-action="transfer">Transfer Owner</button>
-              <button data-action="fee">Update Fee</button>
-              <button data-action="withdraw" class="primary">Withdraw Fees</button>
+          <section class="tab-panel" id="scholarships">
+            <div class="section-heading">
+              <p class="eyebrow">Scholarship setup</p>
+              <h2>Create a funded scholarship</h2>
             </div>
-          </form>
-        </div>
-      </section>
 
-      <section class="tab-panel" id="scholarship">
-        <div class="grid two">
-          <form id="createScholarshipForm" class="card">
-            <h2>Create Scholarship</h2>
-            <input name="name" placeholder="Scholarship name" required />
-            <textarea name="description" placeholder="Description" required></textarea>
-            <input name="maxRecipients" type="number" min="1" placeholder="Max recipients" required />
-            <input name="minCgpaX100" type="number" min="0" max="400" placeholder="Minimum CGPA x 100" required />
-            <input name="maxAnnualIncomeX100" type="number" min="0" placeholder="Max annual income x 100, 0 for no limit" required />
-            <input name="requiredSemester" type="number" min="0" max="16" placeholder="Required semester, 0 for any" required />
-            <input name="deadline" type="datetime-local" required />
-            <input name="tranches" type="number" min="1" placeholder="Number of tranches" required />
-            <input name="ethAmount" type="number" min="0" step="0.000000000000000001" placeholder="ETH/XDC amount to fund" required />
-            <button class="primary">Create</button>
-          </form>
+            <div class="feature-layout">
+              <form id="createScholarshipForm" class="panel wide">
+                <div class="panel-head">
+                  <h3>Create + Fund</h3>
+                  <span>Funds sent with this transaction</span>
+                </div>
+                <input name="name" placeholder="Scholarship name" required />
+                <textarea name="description" placeholder="Short description" required></textarea>
+                <div class="form-grid">
+                  <input name="maxRecipients" type="number" min="1" placeholder="Max recipients" required />
+                  <input name="minCgpaX100" type="number" min="0" max="400" placeholder="Minimum CGPA x 100" required />
+                  <input name="maxAnnualIncomeX100" type="number" min="0" placeholder="Max income x 100" required />
+                  <input name="requiredSemester" type="number" min="0" max="16" placeholder="Required semester, 0 for any" required />
+                  <input name="deadline" type="datetime-local" required />
+                  <input name="ethAmount" type="number" min="0" step="0.000000000000000001" placeholder="Funding amount" required />
+                </div>
+                <button class="primary">Create Funded Scholarship</button>
+              </form>
 
-          <div class="stack">
-            <form id="fundScholarshipForm" class="card">
-              <h2>Fund Scholarship</h2>
-              <input name="scholarshipId" type="number" min="1" placeholder="Scholarship ID" required />
-              <input name="ethAmount" type="number" min="0" step="0.000000000000000001" placeholder="ETH/XDC amount" required />
-              <button>Fund</button>
-            </form>
-
-            <form id="statusScholarshipForm" class="card">
-              <h2>Change Status</h2>
-              <input name="scholarshipId" type="number" min="1" placeholder="Scholarship ID" required />
-              <select name="status">
-                <option value="0">Active</option>
-                <option value="1">Paused</option>
-                <option value="3">Cancelled</option>
-              </select>
-              <button>Update</button>
-            </form>
-
-            <form id="scholarshipLookupForm" class="card">
-              <h2>Scholarship Lookup</h2>
-              <input name="scholarshipId" type="number" min="1" placeholder="Scholarship ID" required />
-              <button>Load Details</button>
-            </form>
-          </div>
-        </div>
-      </section>
-
-      <section class="tab-panel" id="applications">
-        <div class="grid three">
-          <form id="reviewForm" class="card">
-            <h2>Application Review</h2>
-            <input name="applicationId" type="number" min="1" placeholder="Application ID" required />
-            <button>Mark Under Review</button>
-          </form>
-
-          <form id="applicationDecisionForm" class="card">
-            <h2>Decision</h2>
-            <input name="applicationId" type="number" min="1" placeholder="Application ID" required />
-            <textarea name="notes" placeholder="Notes or rejection reason"></textarea>
-            <div class="button-row">
-              <button data-action="approve" class="primary">Approve</button>
-              <button data-action="reject" class="danger">Reject</button>
+              <form id="scholarshipLookupForm" class="panel">
+                <div class="panel-head">
+                  <h3>Scholarship Details</h3>
+                  <span>By ID</span>
+                </div>
+                <input name="scholarshipId" type="number" min="1" placeholder="Scholarship ID" required />
+                <button>Load Scholarship</button>
+              </form>
             </div>
-          </form>
+          </section>
 
-          <form id="releaseForm" class="card">
-            <h2>Release Tranche</h2>
-            <input name="applicationId" type="number" min="1" placeholder="Application ID" required />
-            <button class="primary">Release Next</button>
-          </form>
-        </div>
-
-        <div class="grid two">
-          <form id="studentApplicationsForm" class="card">
-            <h2>Student Applications</h2>
-            <input name="student" placeholder="Student wallet address" required />
-            <button>Get IDs</button>
-          </form>
-
-          <form id="scholarshipApplicationsForm" class="card">
-            <h2>Scholarship Applications</h2>
-            <input name="scholarshipId" type="number" min="1" placeholder="Scholarship ID" required />
-            <button>Get IDs</button>
-          </form>
-        </div>
-      </section>
-
-      <section class="tab-panel" id="audit">
-        <div class="grid three">
-          <form id="paymentHistoryForm" class="card">
-            <h2>Student Payments</h2>
-            <input name="student" placeholder="Student wallet address" required />
-            <button>Load Payments</button>
-          </form>
-
-          <form id="transactionRangeForm" class="card">
-            <h2>Transaction Range</h2>
-            <input name="from" type="number" min="0" placeholder="From index" required />
-            <input name="to" type="number" min="0" placeholder="To index" required />
-            <button>Load Transactions</button>
-          </form>
-
-          <div class="card">
-            <h2>Quick Reads</h2>
-            <div class="button-column">
-              <button id="loadAdmins">All Admins</button>
-              <button id="loadStudents">All Students</button>
-              <button id="loadTxCount">Transaction Count</button>
-              <button id="loadBalance">Contract Balance</button>
+          <section class="tab-panel" id="admin">
+            <div class="section-heading">
+              <p class="eyebrow">Admin workspace</p>
+              <h2>Verify students and process applications</h2>
             </div>
-          </div>
-        </div>
-      </section>
+
+            <div class="feature-layout">
+              <form id="studentDecisionForm" class="panel">
+                <div class="panel-head">
+                  <h3>Student Verification</h3>
+                  <span>Admin only</span>
+                </div>
+                <input name="student" placeholder="Student wallet address" required />
+                <input name="reason" placeholder="Reason if rejecting" />
+                <div class="button-row">
+                  <button data-action="verify" class="primary">Verify</button>
+                  <button data-action="reject" class="danger">Reject</button>
+                </div>
+              </form>
+
+              <form id="applicationDecisionForm" class="panel">
+                <div class="panel-head">
+                  <h3>Application Decision</h3>
+                  <span>Approval disburses once</span>
+                </div>
+                <input name="applicationId" type="number" min="1" placeholder="Application ID" required />
+                <textarea name="notes" placeholder="Decision notes"></textarea>
+                <div class="button-row">
+                  <button data-action="approve" class="primary">Approve + Disburse</button>
+                  <button data-action="reject" class="danger">Reject</button>
+                </div>
+              </form>
+
+              <form id="applicationLookupForm" class="panel">
+                <div class="panel-head">
+                  <h3>Application Details</h3>
+                  <span>By ID</span>
+                </div>
+                <input name="applicationId" type="number" min="1" placeholder="Application ID" required />
+                <button>Load Application</button>
+              </form>
+            </div>
+          </section>
+
+          <section class="tab-panel" id="history">
+            <div class="section-heading">
+              <p class="eyebrow">Basic audit</p>
+              <h2>Transaction history and quick counters</h2>
+            </div>
+
+            <div class="feature-layout">
+              <form id="paymentHistoryForm" class="panel wide">
+                <div class="panel-head">
+                  <h3>Disbursement History</h3>
+                  <span>FundsReleased events</span>
+                </div>
+                <input name="student" placeholder="Student wallet address, optional" />
+                <button>Load History</button>
+              </form>
+
+              <div class="panel">
+                <div class="panel-head">
+                  <h3>Quick Reads</h3>
+                  <span>Contract state</span>
+                </div>
+                <div class="button-column">
+                  <button id="loadRole">Refresh Role</button>
+                  <button id="loadStudents">All Students</button>
+                  <button id="loadCounts">Counts</button>
+                </div>
+              </div>
+            </div>
+          </section>
+        </section>
+      </div>
 
       <section class="results">
         <div class="results-header">
-          <h2>Output</h2>
+          <div>
+            <p class="eyebrow">Output</p>
+            <h2>Latest result</h2>
+          </div>
           <button id="clearOutput">Clear</button>
         </div>
         <pre id="output">Ready.</pre>
